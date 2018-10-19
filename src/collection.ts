@@ -1,17 +1,17 @@
-import { firestore } from './interfaces';
+import { firestore } from "./interfaces";
 
-import { Observable, combineLatest } from 'rxjs';
-import { shareReplay, map, first } from 'rxjs/operators';
-import { GeoFirePoint, Latitude, Longitude } from './point';
-import { setPrecsion } from './util';
-import { FeatureCollection, Geometry } from 'geojson';
+import { Observable, combineLatest } from "rxjs";
+import { shareReplay, map, first } from "rxjs/operators";
+import { GeoFirePoint, Latitude, Longitude } from "./point";
+import { setPrecsion } from "./util";
+import { FeatureCollection, Geometry } from "geojson";
 
 export type QueryFn = (ref: firestore.CollectionReference) => firestore.Query;
 
 export interface GeoQueryOptions {
-  units: 'km';
+  units: "km";
 }
-const defaultOpts: GeoQueryOptions = { units: 'km' };
+const defaultOpts: GeoQueryOptions = { units: "km" };
 
 export interface QueryMetadata {
   bearing: number;
@@ -49,7 +49,7 @@ export class GeoFireCollectionRef {
    * @param {string} id='id'
    * @returns {Observable<any[]>}
    */
-  data(id = 'id'): Observable<any[]> {
+  data(id = "id"): Observable<any[]> {
     return this.stream.pipe(snapToData(id));
   }
   /**
@@ -161,8 +161,10 @@ export class GeoFireCollectionRef {
   first() {}
 
   private queryPoint(geohash: string, field: string) {
-    const end = geohash + '~';
+    const end = geohash + "~";
     return this.query
+      .where("dismissed", "==", "false")
+      .orderBy("created_at")
       .orderBy(`${field}.geohash`)
       .startAt(geohash)
       .endAt(end);
@@ -182,7 +184,7 @@ export class GeoFireCollectionRef {
   // }
 }
 
-function snapToData(id = 'id') {
+function snapToData(id = "id") {
   return map((foo: firestore.QuerySnapshot) =>
     foo.docs.map(v => {
       return {
@@ -210,7 +212,7 @@ function createStream(input): Observable<any> {
 export function toGeoJSON(field: string, includeProps: boolean = false) {
   return map((data: any[]) => {
     return {
-      type: 'FeatureCollection',
+      type: "FeatureCollection",
       features: data.map(v =>
         GeoFirePoint.geoJSON(
           [v[field].geopoint.latitude, v[field].geopoint.longitude],
